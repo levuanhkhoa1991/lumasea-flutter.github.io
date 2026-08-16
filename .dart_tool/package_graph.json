@@ -11,6 +11,7 @@
         "flutter",
         "flutter_localizations",
         "google_fonts",
+        "url_launcher",
         "video_player"
       ],
       "devDependencies": [
@@ -180,6 +181,20 @@
       "dependencies": []
     },
     {
+      "name": "url_launcher",
+      "version": "6.3.2",
+      "dependencies": [
+        "flutter",
+        "url_launcher_android",
+        "url_launcher_ios",
+        "url_launcher_linux",
+        "url_launcher_macos",
+        "url_launcher_platform_interface",
+        "url_launcher_web",
+        "url_launcher_windows"
+      ]
+    },
+    {
       "name": "cupertino_icons",
       "version": "1.0.9",
       "dependencies": []
@@ -218,6 +233,21 @@
       ]
     },
     {
+      "name": "url_launcher_platform_interface",
+      "version": "2.3.2",
+      "dependencies": [
+        "flutter",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "plugin_platform_interface",
+      "version": "2.1.8",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
       "name": "google_fonts",
       "version": "6.3.3",
       "dependencies": [
@@ -236,10 +266,34 @@
       ]
     },
     {
+      "name": "url_launcher_linux",
+      "version": "3.2.2",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
+      ]
+    },
+    {
       "name": "string_scanner",
       "version": "1.4.1",
       "dependencies": [
         "source_span"
+      ]
+    },
+    {
+      "name": "url_launcher_windows",
+      "version": "3.1.5",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
+      ]
+    },
+    {
+      "name": "url_launcher_macos",
+      "version": "3.2.5",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
       ]
     },
     {
@@ -305,13 +359,6 @@
       ]
     },
     {
-      "name": "plugin_platform_interface",
-      "version": "2.1.8",
-      "dependencies": [
-        "meta"
-      ]
-    },
-    {
       "name": "html",
       "version": "0.15.6",
       "dependencies": [
@@ -327,12 +374,20 @@
       ]
     },
     {
-      "name": "video_player_web",
-      "version": "2.4.0",
+      "name": "url_launcher_ios",
+      "version": "6.4.1",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
+      ]
+    },
+    {
+      "name": "url_launcher_web",
+      "version": "2.4.3",
       "dependencies": [
         "flutter",
         "flutter_web_plugins",
-        "video_player_platform_interface",
+        "url_launcher_platform_interface",
         "web"
       ]
     },
@@ -347,6 +402,16 @@
       "name": "web",
       "version": "1.1.1",
       "dependencies": []
+    },
+    {
+      "name": "video_player_web",
+      "version": "2.4.0",
+      "dependencies": [
+        "flutter",
+        "flutter_web_plugins",
+        "video_player_platform_interface",
+        "web"
+      ]
     },
     {
       "name": "http",
@@ -556,6 +621,15 @@
       "version": "3.0.0",
       "dependencies": [
         "meta"
+      ]
+    },
+    {
+      "name": "url_launcher_android",
+      "version": "6.3.32",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "url_launcher_platform_interface"
       ]
     }
   ],
