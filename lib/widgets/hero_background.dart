@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import '../data/catalog.dart';
 
 /// Hero background for the top banner.
 ///
@@ -106,6 +107,18 @@ class _HeroBackgroundState extends State<HeroBackground>
             ),
             CustomPaint(painter: _LayeredWavePainter(_waveController.value)),
           ]),
+        ),
+      // A real ocean photo layered on top of the animated fallback for
+      // extra life. While it loads (or if it fails — e.g. no internet)
+      // the animated gradient + waves underneath keep showing through,
+      // so the hero never looks broken or empty.
+      if (!_videoReady)
+        Image.network(
+          heroPhotoUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+          loadingBuilder: (context, child, progress) =>
+              progress == null ? child : const SizedBox.shrink(),
         ),
       // Soft dark overlay so text stays readable whether it's the video
       // or the canvas fallback underneath.

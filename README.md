@@ -14,7 +14,15 @@ LumaSea is a pure Flutter/Dart mobile prototype for island travel: book tours, c
 - **Order details**: itemized list of every selected service with prices, subtotal, service fee, and total.
 - Material 3 interface with an ocean-inspired palette.
 - In-app language switcher (tap the language pill in the top-right of the hero) — switches instantly between English, 日本語, and Tiếng Việt without restarting the app.
-- Animated hero background: layered painted waves + a slowly shifting gradient by default. Drop a video at `assets/videos/hero_wave.mp4` (see `assets/videos/README.txt`) and it automatically plays there instead — no code changes needed.
+- **Real ocean photo hero background**, layered over the animated wave painter for extra life. If the photo fails to load (no internet), the animated gradient + waves keep showing through — the hero never looks broken. Drop a video at `assets/videos/hero_wave.mp4` and it takes priority over both.
+- **Shopping cart**: tap the bag icon in the hero (with a live item-count badge) to open the cart — add, remove, and adjust quantities for every service, see the subtotal, then jump straight into contact or booking.
+- **Tour/service detail sheet**: tap any card to see its full photo gallery, description, a mini route map, and bundled hotel/restaurant add-ons you can add with one tap — plus "Contact us" and "Schedule now" buttons.
+- **Contact sheet**: call the hotline, chat on Zalo, or email — one tap opens your phone/email app via `url_launcher`.
+- **5-step booking flow**: confirm services → journey route map → passenger details → payment → order summary.
+- **Payment method choice**: domestic card / e-wallet (MoMo, ZaloPay, Napas) or international card (Visa/Mastercard), each with its own mock form.
+- **Flight fare tiers**: Economy, Premium Economy, and Business domestic flights, each with its own price — plus boat, private car, and the futuristic FlyCar air taxi.
+- **Illustrated route map**: an animated, stylized journey map (not a real GPS map — no API key needed) showing your stops with a moving icon for your chosen transport mode.
+- **Order details**: itemized list of every selected service with prices, subtotal, service fee, and total.
 - Swipeable photo carousel on every card, with animated dot indicators. Ships with placeholder network photos; swap in your own URLs (or local assets) any time.
 - Staggered fade + rise-in entrance animation for cards, a smooth fade when switching filter chips, and an animated add/remove toggle on each service.
 
@@ -34,10 +42,15 @@ lib/
 │   └── app_localizations.dart      # translation strings (en / ja / vi) + language switcher logic
 ├── data/
 │   └── catalog.dart                # all destinations, hotels, restaurants & transport options
+├── state/
+│   └── cart_model.dart             # global cart: quantities, add/remove/edit, totals
 └── widgets/
-    ├── hero_background.dart        # video-with-fallback animated hero background
+    ├── hero_background.dart        # video → real ocean photo → animated canvas, in that priority
     ├── photo_carousel.dart         # reusable swipeable image carousel + dot indicators
-    ├── service_card.dart           # tour/hotel/restaurant/transport card
+    ├── service_card.dart           # tour/hotel/restaurant/transport card, tap for detail
+    ├── service_detail_sheet.dart   # full tour detail: gallery, description, map, add-ons
+    ├── cart_sheet.dart             # cart screen: quantity steppers, remove, checkout
+    ├── contact_sheet.dart          # call / Zalo / email quick actions
     ├── route_map.dart              # illustrated animated journey map
     └── order_summary.dart          # itemized order list + subtotal/fee/total
 assets/
@@ -52,6 +65,13 @@ Everything lives in `lib/data/catalog.dart` as a single `List<ServiceItem>`. To 
 ## About the route map
 
 The journey map in the booking flow is a **stylized illustration** (curved path, stop dots, and an animated icon for your transport mode), built entirely with Flutter's `CustomPainter` — it needs no API key and no native map SDK setup, so it works everywhere this project runs, including Snack. If you'd like a real interactive map later, swap `RouteMap` for the `google_maps_flutter` package with your own Google Maps API key (this requires native Android/iOS configuration that isn't practical inside a Snack-style project).
+
+## Before going live
+
+A few placeholders to swap out for your real business details:
+- `lib/widgets/contact_sheet.dart` — hotline number, Zalo link, and email are placeholders.
+- `lib/data/catalog.dart` — `heroPhotoUrl` and every service's `photos` list use free stock/placeholder images (Unsplash / picsum.photos); replace with your own.
+- Payment in the booking flow is a UI mock only — no real card or e-wallet transaction is processed.
 
 ## Localization
 

@@ -3,10 +3,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'data/catalog.dart';
 import 'l10n/app_localizations.dart';
+import 'state/cart_model.dart';
+import 'widgets/cart_sheet.dart';
 import 'widgets/hero_background.dart';
 import 'widgets/order_summary.dart';
 import 'widgets/route_map.dart';
 import 'widgets/service_card.dart';
+import 'widgets/service_detail_sheet.dart';
 
 void main() => runApp(const LumaSeaApp());
 
@@ -58,17 +61,14 @@ class ExplorePage extends StatefulWidget {
 }
 
 class _ExplorePageState extends State<ExplorePage> {
-  final List<String> selectedIds = [];
   ServiceCategory? filter;
-  int bookingStep = 0;
-
-  List<ServiceItem> get selectedItems => catalog.where((i) => selectedIds.contains(i.id)).toList();
 
   /// Route stops for the map: Ho Chi Minh City plus each unique
-  /// destination among the selected tours/hotels. Falls back to a demo
+  /// destination among the cart's tours/hotels. Falls back to a demo
   /// route so the map always has something to show.
-  List<String> _routeStopKeys(AppLocalizations l10n) {
-    final destinationKeys = selectedItems
+  List<String> _routeStopKeys() {
+    final destinationKeys = cart.lines
+        .map((l) => l.item)
         .where((i) => i.category == ServiceCategory.tours || i.category == ServiceCategory.hotels)
         .map((i) => i.titleKey)
         .toSet()
@@ -78,16 +78,17 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   TransportMode _selectedTransportMode() {
-    final transportItem = selectedItems.where((i) => i.transportMode != null).toList();
-    return transportItem.isNotEmpty ? transportItem.first.transportMode! : TransportMode.boat;
+    final transportLine = cart.lines.where((l) => l.item.transportMode != null).toList();
+    return transportLine.isNotEmpty ? transportLine.first.item.transportMode! : TransportMode.boat;
   }
 
   void _openBooking(AppLocalizations l10n) {
-    if (selectedIds.isEmpty) {
+    if (cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.t('addServiceWarning'))));
       return;
     }
-    bookingStep = 0;
+    var bookingStep = 0;
+    var paymentMethod = PaymentMethod.domestic;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -109,9 +110,11 @@ class _ExplorePageState extends State<ExplorePage> {
               child: SingleChildScrollView(
                 child: _BookingContent(
                   step: bookingStep,
-                  items: selectedItems,
-                  routeStops: _routeStopKeys(l).map((key) => l.t(key)).toList(),
+                  lines: cart.lines,
+                  routeStops: _routeStopKeys().map((key) => l.t(key)).toList(),
                   transportMode: _selectedTransportMode(),
+                  paymentMethod: paymentMethod,
+                  onPaymentMethodChanged: (method) => setModalState(() => paymentMethod = method),
                 ),
               ),
             ),
@@ -123,6 +126,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 if (bookingStep < _bookingStepCount - 1) {
                   setModalState(() => bookingStep++);
                 } else {
+                  cart.clear();
                   Navigator.pop(context);
                 }
               }, icon: Icon(bookingStep == _bookingStepCount - 1 ? Icons.check : Icons.arrow_forward), label: Text(bookingStep == _bookingStepCount - 1 ? l.t('finish') : l.t('continueLabel'))),
@@ -155,7 +159,7 @@ class _ExplorePageState extends State<ExplorePage> {
 
     return Scaffold(
       body: CustomScrollView(slivers: [
-        const SliverToBoxAdapter(child: _Hero()),
+        SliverToBoxAdapter(child: _Hero(onOpenCart: () => showCartSheet(context, onCheckout: () => _openBooking(l10n)))),
         SliverPadding(padding: const EdgeInsets.fromLTRB(20, 28, 20, 40), sliver: SliverList(delegate: SliverChildListDelegate([
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text(l10n.t('destinationsHeading'), style: GoogleFonts.dmSerifDisplay(fontSize: 27, color: const Color(0xFF073B4C))),
@@ -173,37 +177,36 @@ class _ExplorePageState extends State<ExplorePage> {
                   ServiceCard(
                     service: filtered[i],
                     index: i,
-                    selected: selectedIds.contains(filtered[i].id),
-                    onToggle: () => setState(() {
-                      final id = filtered[i].id;
-                      selectedIds.contains(id) ? selectedIds.remove(id) : selectedIds.add(id);
-                    }),
+                    onTap: () => showServiceDetailSheet(context, filtered[i], onSchedule: () => _openBooking(l10n)),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 14),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 260),
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SizeTransition(sizeFactor: animation, child: child),
-            ),
-            child: selectedIds.isEmpty
-                ? const SizedBox.shrink()
-                : Card(
-                    key: const ValueKey('journey-card'),
-                    color: const Color(0xFFE0F2FE),
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Row(children: [
-                        const Icon(Icons.luggage_outlined, color: Color(0xFF075985)),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text('${selectedIds.length} ${l10n.t('journeyCount')}', style: const TextStyle(fontWeight: FontWeight.w700))),
-                        FilledButton(onPressed: () => _openBooking(l10n), child: Text(l10n.t('bookNow'))),
-                      ]),
+          AnimatedBuilder(
+            animation: cart,
+            builder: (context, _) => AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SizeTransition(sizeFactor: animation, child: child),
+              ),
+              child: cart.isEmpty
+                  ? const SizedBox.shrink()
+                  : Card(
+                      key: const ValueKey('journey-card'),
+                      color: const Color(0xFFE0F2FE),
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Row(children: [
+                          const Icon(Icons.luggage_outlined, color: Color(0xFF075985)),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text('${cart.totalItems} ${l10n.t('journeyCount')}', style: const TextStyle(fontWeight: FontWeight.w700))),
+                          FilledButton(onPressed: () => _openBooking(l10n), child: Text(l10n.t('bookNow'))),
+                        ]),
+                      ),
                     ),
-                  ),
+            ),
           ),
         ]))),
       ]),
@@ -212,7 +215,8 @@ class _ExplorePageState extends State<ExplorePage> {
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero();
+  final VoidCallback onOpenCart;
+  const _Hero({required this.onOpenCart});
 
   @override
   Widget build(BuildContext context) {
@@ -220,13 +224,17 @@ class _Hero extends StatelessWidget {
     return SizedBox(
       height: 430,
       child: Stack(fit: StackFit.expand, children: [
-        // Plays assets/videos/hero_wave.mp4 if present, otherwise falls
-        // back to an animated gradient + wave painter automatically.
+        // Plays assets/videos/hero_wave.mp4 if present; else shows a real
+        // ocean photo; else falls back to an animated wave painter.
         const HeroBackground(),
         SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(22, 22, 22, 30), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('LumaSea', style: GoogleFonts.dmSerifDisplay(color: Colors.white, fontSize: 29)),
-            const _LanguageSwitcher(),
+            Row(children: [
+              _CartButton(onTap: onOpenCart),
+              const SizedBox(width: 8),
+              const _LanguageSwitcher(),
+            ]),
           ]),
           const Spacer(),
           Container(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7), decoration: BoxDecoration(color: const Color(0xFFF4C95D), borderRadius: BorderRadius.circular(20)), child: Text(l10n.t('promoTag'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800))),
@@ -237,6 +245,36 @@ class _Hero extends StatelessWidget {
           const SizedBox(height: 20),
           FilledButton.icon(onPressed: () {}, icon: const Icon(Icons.explore_outlined), label: Text(l10n.t('exploreButton')), style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF4C95D), foregroundColor: const Color(0xFF073B4C), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14))),
         ]))),
+      ]),
+    );
+  }
+}
+
+/// Cart icon with a live badge showing how many items are inside.
+class _CartButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _CartButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: cart,
+      builder: (context, _) => Stack(clipBehavior: Clip.none, children: [
+        Container(
+          decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+          child: IconButton(onPressed: onTap, icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20)),
+        ),
+        if (cart.totalItems > 0)
+          Positioned(
+            right: -2,
+            top: -2,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              decoration: const BoxDecoration(color: Color(0xFFF4C95D), shape: BoxShape.circle),
+              child: Text('${cart.totalItems}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF073B4C))),
+            ),
+          ),
       ]),
     );
   }
@@ -273,18 +311,22 @@ class _LanguageSwitcher extends StatelessWidget {
 
 /// Content for each of the 5 booking steps:
 /// 0. Confirm services  1. Route map  2. Passenger details
-/// 3. Payment           4. Order summary
+/// 3. Payment (domestic / international)  4. Order summary
 class _BookingContent extends StatelessWidget {
   final int step;
-  final List<ServiceItem> items;
+  final List<CartLine> lines;
   final List<String> routeStops;
   final TransportMode transportMode;
+  final PaymentMethod paymentMethod;
+  final ValueChanged<PaymentMethod> onPaymentMethodChanged;
 
   const _BookingContent({
     required this.step,
-    required this.items,
+    required this.lines,
     required this.routeStops,
     required this.transportMode,
+    required this.paymentMethod,
+    required this.onPaymentMethodChanged,
   });
 
   @override
@@ -301,7 +343,7 @@ class _BookingContent extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: const Color(0xFFF1F9FA), borderRadius: BorderRadius.circular(18)),
-            child: OrderItemsList(items: items),
+            child: OrderItemsList(lines: lines),
           ),
         );
       case 1:
@@ -336,7 +378,29 @@ class _BookingContent extends StatelessWidget {
           icon: Icons.credit_card,
           title: l10n.t('step2Title'),
           subtitle: l10n.t('step2Subtitle'),
-          child: _textBox(l10n.t('step2Body')),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(l10n.t('paymentMethod'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 10),
+            Row(children: [
+              Expanded(
+                child: ChoiceChip(
+                  label: Text(l10n.t('paymentDomestic')),
+                  selected: paymentMethod == PaymentMethod.domestic,
+                  onSelected: (_) => onPaymentMethodChanged(PaymentMethod.domestic),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ChoiceChip(
+                  label: Text(l10n.t('paymentInternational')),
+                  selected: paymentMethod == PaymentMethod.international,
+                  onSelected: (_) => onPaymentMethodChanged(PaymentMethod.international),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 16),
+            _textBox(paymentMethod == PaymentMethod.domestic ? l10n.t('domesticBody') : l10n.t('step2Body')),
+          ]),
         );
       default:
         return _wrap(
@@ -344,7 +408,7 @@ class _BookingContent extends StatelessWidget {
           title: l10n.t('step3Title'),
           subtitle: l10n.t('step3Subtitle'),
           child: Column(children: [
-            OrderSummaryCard(items: items),
+            OrderSummaryCard(lines: lines),
             const SizedBox(height: 12),
             _textBox(l10n.t('step3Body')),
           ]),

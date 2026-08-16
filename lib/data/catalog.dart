@@ -7,6 +7,14 @@ enum ServiceCategory { tours, hotels, restaurants, transport }
 /// faster alternative alongside the more conventional boat/car/flight.
 enum TransportMode { boat, car, flight, flyCar }
 
+enum PaymentMethod { domestic, international }
+
+/// A real ocean photo used as the hero background. If it fails to load
+/// (e.g. no internet), the hero automatically falls back to the
+/// animated gradient + wave painter — see widgets/hero_background.dart.
+const String heroPhotoUrl =
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80';
+
 class ServiceItem {
   final String id;
   final ServiceCategory category;
@@ -64,7 +72,9 @@ final List<ServiceItem> catalog = [
   // --- Transport ---
   ServiceItem(id: 'transport-boat', category: ServiceCategory.transport, titleKey: 'transportBoat', priceVnd: 350000, icon: Icons.directions_boat_filled, photos: _photos('boat'), transportMode: TransportMode.boat, duration: '3h'),
   ServiceItem(id: 'transport-car', category: ServiceCategory.transport, titleKey: 'transportCar', priceVnd: 890000, icon: Icons.directions_car_filled, photos: _photos('car'), transportMode: TransportMode.car, duration: '5h'),
-  ServiceItem(id: 'transport-flight', category: ServiceCategory.transport, titleKey: 'transportFlight', priceVnd: 1290000, icon: Icons.flight, photos: _photos('flight'), transportMode: TransportMode.flight, duration: '1h10'),
+  ServiceItem(id: 'transport-flight-eco', category: ServiceCategory.transport, titleKey: 'transportFlightEco', priceVnd: 890000, icon: Icons.flight, photos: _photos('flighteco'), transportMode: TransportMode.flight, duration: '1h10'),
+  ServiceItem(id: 'transport-flight-plus', category: ServiceCategory.transport, titleKey: 'transportFlightPlus', priceVnd: 1490000, icon: Icons.flight, photos: _photos('flightplus'), transportMode: TransportMode.flight, duration: '1h10'),
+  ServiceItem(id: 'transport-flight-business', category: ServiceCategory.transport, titleKey: 'transportFlightBusiness', priceVnd: 2790000, icon: Icons.flight, photos: _photos('flightbiz'), transportMode: TransportMode.flight, duration: '1h05'),
   ServiceItem(id: 'transport-flycar', category: ServiceCategory.transport, titleKey: 'transportFlyCar', priceVnd: 2990000, icon: Icons.flight_takeoff, photos: _photos('flycar'), transportMode: TransportMode.flyCar, duration: '35 min'),
 ];
 
